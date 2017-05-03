@@ -1,6 +1,8 @@
 
 package houseanalysis
 
+import scala.language.implicitConversions
+import scala.language.dynamics
 import scala.collection._
 import collection.mutable.HashMap
 import java.text.DecimalFormat
@@ -10,6 +12,7 @@ class HouseAnalysisDSL {
   
   abstract class Person {
     var name: String = ""
+    var budget: Double = 0.0
     var interestRate: Double = 0.0
     
     var lessPriorities = mutable.MutableList[String]()
@@ -21,7 +24,19 @@ class HouseAnalysisDSL {
     def am(n: String) = {
       name = n
       
+      println("Hi, " + name + ", let's find you a new home!\n")
+      
       HaveGetter
+    }
+    
+    def and(ir: Double) = {
+      interestRate = ir
+        
+      RateGetter
+    }
+      
+    def and(h: BudgetType) = {
+      BudgetGetter
     }
     
     object HaveGetter {
@@ -30,23 +45,37 @@ class HouseAnalysisDSL {
       }
       
       object AnGetter {
-        def an(i: InterestRateType) = {
+        def a(ir: Double) = {
+          interestRate = ir
+          
           RateGetter
         }
         
-        object RateGetter {
-          def of(rate: Double) = {
-            interestRate = rate
-            
-            I
-          }
+        def a(b: BudgetType) = {
+          BudgetGetter
         }
+      }
+    }
+    
+    object RateGetter {
+      def interest(r: RateType) = {
+        I
+      }
+    }
+        
+    object BudgetGetter {
+      def of(b: Double) = {
+        budget = b
+            
+        I
       }
     }
   }
   
   object My {
     def priorities(a: AreType) = {
+      println("It sounds like you know exactly what you are looking for, " + I.name + "!\n")
+      
       PriorityGetter
     }
     
@@ -58,6 +87,30 @@ class HouseAnalysisDSL {
       }
       
       def more(key: String) = {
+        I.morePriorities += key
+        
+        PriorityGetter
+      }
+      
+      def smaller(key: String) = {
+        I.lessPriorities += key
+        
+        PriorityGetter
+      }
+      
+      def bigger(key: String) = {
+        I.morePriorities += key
+        
+        PriorityGetter
+      }
+      
+      def worse(key: String) = {
+        I.lessPriorities += key
+        
+        PriorityGetter
+      }
+      
+      def better(key: String) = {
         I.morePriorities += key
         
         PriorityGetter
@@ -83,7 +136,7 @@ class HouseAnalysisDSL {
     var taxRate: Double = 0.0
     var hoaFee: Double = 0.0
     var insuranceCost: Double = 0.0
-    var featuresMap = new HashMap[String, Double]() { override def default(key: String) = 0.0 }
+    var featuresMap = new HashMap[String, Double]()
     var points = 0
   }
   
@@ -101,36 +154,106 @@ class HouseAnalysisDSL {
     
     def costs(c: Double) = {
       cost = c
-      featuresMap += ("cost" -> cost)
       
       house
     }
     
-    def hoafee(fee: Double) = {
-      hoaFee = fee
-      featuresMap += ("hoa" -> hoaFee)
-      
-      house
+    def and(h: HasType) = {
+      TaxRateGetter
     }
     
-    def taxrate(rate: Double) = {
-      taxRate = rate
-      featuresMap += ("tax" -> taxRate)
-      
-      house
+    def and(i: InsuranceType) = {
+      InsuranceCostGetter
     }
     
-    def insurance(ic: Double) = {
-      insuranceCost = ic
-      featuresMap += ("insurance" -> insuranceCost)
-      
-      house
+    def and(h: HOAType) = {
+      HOAGetter
     }
     
-    def has(key: String, value: Double) = {
-      featuresMap += (key -> value)
+    object TaxRateGetter {
+      def a(tr: Double) = {
+        taxRate = tr
+        
+        TaxRate
+      }
       
-      house
+      object TaxRate {
+        def tax(r: RateType) = {
+          house
+        }
+      }
+    }
+    
+    object InsuranceCostGetter {
+      def costs(c: Double) = {
+        insuranceCost = c
+        
+        FrequencyGetter
+      }
+      
+      object FrequencyGetter {
+        def dollars(m: MonthlyType) = {
+          insuranceCost = insuranceCost * 12
+          
+          house
+        }
+        
+        def dollars(y: YearlyType) = {
+          house
+        }
+      }
+    }
+    
+    object HOAGetter {
+      def costs(c: Double) = {
+        hoaFee = c
+        
+        FrequencyGetter
+      }
+      
+      object FrequencyGetter {
+        def dollars(m: MonthlyType) = {
+          house
+        }
+        
+        def dollars(q: QuaterlyType) = {
+          // Get monthly cost
+          hoaFee = hoaFee / 3
+          
+          house
+        }
+        
+        def dollars(y: YearlyType) = {
+          // Get monthly cost
+          hoaFee = hoaFee / 12
+          
+          house
+        }
+      }
+    }
+  }
+  
+  implicit def doubleToAttributeGetter(d: Double) = new AttributeGetter(d)
+  
+  class AttributeGetter(d: Double) extends Dynamic {
+    def ct(key: String) = {
+      house.featuresMap += (key -> d)
+    }
+    
+    def acre(key: String) = {
+      house.featuresMap += (key -> d)
+    }
+    
+    def sqft(key: String) = {
+      house.featuresMap += (key -> d)
+    }
+    
+    def mi(key: String) = {
+      house.featuresMap += (key -> d)
+    }
+    
+    def rated(key: String) = {
+      house.featuresMap += (key -> d)
     }
   }
   
@@ -259,8 +382,13 @@ class HouseAnalysisDSL {
         object ConsiderAlgorithm {
 
           def buy() = {
+            if (consider.houses.size == 0) {
+              throw new RuntimeException("ERROR: You must consider some houses.")
+            }
+            
             calculatePoints(I.lessPriorities, lessFunc)
             calculatePoints(I.morePriorities, moreFunc)
+            adjustPointsForCost()
             
             var houses = houseToBuy()
             printHouseToBuy(houses)
@@ -270,11 +398,13 @@ class HouseAnalysisDSL {
         }
         
         def lessFunc(lhs: Double, rhs: Double) = {
-           lhs < rhs
+          // <= to handle ties correctly.
+           lhs <= rhs
         }
           
         def moreFunc(lhs: Double, rhs: Double) = {
-          lhs > rhs
+          // >= to handle ties correctly.
+          lhs >= rhs
         }
           
         def calculatePoints(priorities: mutable.MutableList[String], f: (Double, Double) => Boolean) = {
@@ -286,21 +416,29 @@ class HouseAnalysisDSL {
               
             for (h <- houses) {
               // House algorithm
-              var value = h.featuresMap(p)
-                  
-              if (leaderboard.size > 0 && f(value, leaderboard(0)._2)) {
-                leaderboard = mutable.MutableList((h, value)) ++ leaderboard
-              }
-              else if (leaderboard.size > 1 && f(value, leaderboard(1)._2)) {
-                var lpair = leaderboard.splitAt(1)
-                leaderboard = lpair._1 ++ mutable.MutableList((h, value)) ++ lpair._2
-              }
-              else if (leaderboard.size > 2 && f(value, leaderboard(2)._2)) {
-                var lpair = leaderboard.splitAt(2)
-                leaderboard = lpair._1 ++ mutable.MutableList((h, value)) ++ lpair._2
-              }
-              else {
-                leaderboard = leaderboard ++ mutable.MutableList((h, value))
+              if (h.featuresMap.contains(p)) {
+                var value = h.featuresMap(p)
+                
+                // Check the value against 1st, 2nd, and 3rd place's value to see where
+                // in the leaderboard this house should go for the priority.
+                if (leaderboard.size > 0 && f(value, leaderboard(0)._2)) {
+                  // Insert into first place.
+                  leaderboard = mutable.MutableList((h, value)) ++ leaderboard
+                }
+                else if (leaderboard.size > 1 && f(value, leaderboard(1)._2)) {
+                  // Insert into second place.
+                  var lpair = leaderboard.splitAt(1)
+                  leaderboard = lpair._1 ++ mutable.MutableList((h, value)) ++ lpair._2
+                }
+                else if (leaderboard.size > 2 && f(value, leaderboard(2)._2)) {
+                  // Insert into third place.
+                  var lpair = leaderboard.splitAt(2)
+                  leaderboard = lpair._1 ++ mutable.MutableList((h, value)) ++ lpair._2
+                }
+                else {
+                  // Tack it onto the end.
+                  leaderboard = leaderboard ++ mutable.MutableList((h, value))
+                }
               }
             }
             
@@ -330,18 +468,35 @@ class HouseAnalysisDSL {
           }
         }
         
+        def adjustPointsForCost() = {
+          var budget = I.budget
+          
+          // For every 10% under budget add a point.
+          // For every 10% over budget subtract a point.
+          for (h <- consider.houses) {
+            var difference = (budget - h.cost).toInt
+            var pointChange = (difference / (budget * .10)).toInt
+            h.points += pointChange
+          }
+        }
+        
         def houseToBuy() = {
           var houses = consider.houses
           var winnerPoints = 0
           
+          // Can have ties
           var winners = mutable.MutableList[House]()
           
           for (h <- houses) {
+            println("House " + h.name + " received " + h.points + " points.")
             if (h.points > winnerPoints) {
+              // We have a new highest. Update highest points
+              // and reset the winners list.
               winnerPoints = h.points
               winners = mutable.MutableList[House](h)
             }
             else if (h.points == winnerPoints) {
+              // We have a tie, add house to winners list.
               winners += h
             }              
           }
