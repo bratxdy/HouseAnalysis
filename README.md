@@ -19,14 +19,16 @@ The strings are the keys that you plan to add to your houses later on with their
 
 ### Create houses for the algorithm to consider.
 
-```house - "e50th" costs 619000 and has a 0.023 tax rate and insurance costs 1000 dollars yearly and HOA costs 225 dollars monthly
+```
+house - "e50th" costs 619000 and has a 0.023 tax rate and insurance costs 1000 dollars yearly and HOA costs 225 dollars monthly
     
 4 ct "bedrooms"
 .35 acre "yard"
 10 rated "master bath"
 4 mi "distance to downtown"
 
-consider the house```
+consider the house
+```
 
 This code will create a house with the name, cost, tax rate, insurance, and HOA. Insurance, HOA, and tax rate are used in the mortgage calculation and are therefor optional. For insurance you can say `monthly` or `yearly` and for HOA you can say `monthly`, `quarterly`, or `yearly`. This will then populate the house with the four properties: `bedrooms`, `yard`, `master bath`, and `distance to downtown`. *It's important that these property strings match those set forth above in the priorities.* You can add as many properties to a house you want, but only those set up in the priorities will make a difference. The last line of code will make a copy of the house and add it to the list of houses being considered and *reset* the house object.
 
