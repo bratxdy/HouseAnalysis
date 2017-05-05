@@ -1,6 +1,8 @@
 # HouseAnalysis
 A Scala Internal DSL written in Scala for the CS345 final assignment. This DSL allows you to write code that closely resembles natural language to help you decide which house to buy.
 
+Presentation: https://docs.google.com/presentation/d/13H-rKIhrEeTizW6W58h1-JslGyVp--9KtiNIgMVqoOw/edit?usp=sharing
+
 # What can you do?
 
 ### Create a person with your interest rate, budget, and priorities.
